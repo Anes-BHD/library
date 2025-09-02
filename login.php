@@ -1,0 +1,190 @@
+<?php
+require_once 'config.php';
+require_once 'functions.php';
+
+if (isLoggedIn()) {
+    header('Location: index.php');
+    exit;
+}
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    if (empty($email) || empty($password)) {
+        $error = "Veuillez remplir tous les champs.";
+    } else {
+        $user = getUserByEmail($email);
+        
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['name'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['is_admin'] = (bool)$user['is_admin'];
+            
+            header('Location: index.php');
+            exit;
+        } else {
+            $error = "Email ou mot de passe incorrect.";
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliothèque EPI - Connexion</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .login-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/library-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            min-height: calc(100vh - 56px);
+            display: flex;
+            align-items: center;
+            padding: 2rem 0;
+        }
+        .login-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.php"><i class="fas fa-book-open me-2"></i>Bibliothèque EPI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="books.php">Livres</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="author_management.php">Auteurs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="genre_management.php">Genres</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="login.php" class="btn btn-light me-2 active">Connexion</a>
+                    <a href="register.php" class="btn btn-outline-light">Inscription</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <section class="login-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-5">
+                    <div class="card login-card">
+                        <div class="card-body p-5">
+                            <h2 class="text-center mb-4">Connexion</h2>
+                            
+                            <?php if ($error): ?>
+                            <div class="alert alert-danger" role="alert">
+                                <?php echo htmlspecialchars($error); ?>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <form method="POST" action="">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="password" class="form-label">Mot de passe</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div class="text-center mt-4">
+                                <p class="mb-0">Vous n'avez pas de compte ?</p>
+                                <a href="register.php" class="btn btn-link">Créer un compte</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>Bibliothèque EPI</h5>
+                    <p>Votre source de connaissances et de divertissement à Sousse.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Liens rapides</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.php" class="text-white">Accueil</a></li>
+                        <li><a href="books.php" class="text-white">Livres</a></li>
+                        <li><a href="author_management.php" class="text-white">Auteurs</a></li>
+                        <li><a href="genre_management.php" class="text-white">Genres</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact</h5>
+                    <address>
+                        <p>École Polytechnique Internationale Sousse</p>
+                        <p>Email: bibliotheque@epi.tn</p>
+                        <p>Tél: +216 73 123 456</p>
+                    </address>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="text-center">
+                <p>&copy; 2024-2025 Bibliothèque EPI. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
