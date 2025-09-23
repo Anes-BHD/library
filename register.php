@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    $is_admin = isset($_POST['is_admin']) ? (bool)$_POST['is_admin'] : false;
+    $is_admin = isset($_POST['is_admin']) ? (int)$_POST['is_admin'] : 0;
     
     if (empty($name) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = "Veuillez remplir tous les champs.";
@@ -38,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.";
             } catch (PDOException $e) {
                 $error = "Une erreur est survenue lors de la création du compte.";
-            }
+                $output = json_encode($e);
+                echo "console.log('$output');";            }
         }
     }
 }
@@ -241,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <address>
                         <p>École Polytechnique Internationale Sousse</p>
                         <p>Email: bibliotheque@epi.tn</p>
-                        <p>Tél: +216 73 123 456</p>
+                        <p>Tél: +216 73 737 373</p>
                     </address>
                 </div>
             </div>
@@ -255,4 +256,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

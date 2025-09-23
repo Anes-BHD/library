@@ -1,8 +1,8 @@
 <?php
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'library_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'library_user');
+define('DB_PASS', 'yourpassword');
 
 if (session_status() == PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', 1);
@@ -36,8 +36,11 @@ date_default_timezone_set('Africa/Tunis');
 mb_internal_encoding('UTF-8');
 
 try {
+    // Always use the MySQL socket for connection
+    $socket = '/var/run/mysqld/mysqld.sock';
+    $dsn = "mysql:unix_socket=$socket";
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST,
+        $dsn,
         DB_USER,
         DB_PASS,
         [
@@ -49,8 +52,9 @@ try {
 
     $pdo->exec("CREATE DATABASE IF NOT EXISTS " . DB_NAME . " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     
+    $dsn2 = "mysql:unix_socket=$socket;dbname=" . DB_NAME . ";charset=utf8mb4";
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        $dsn2,
         DB_USER,
         DB_PASS,
         [
@@ -128,4 +132,4 @@ function createTables($pdo) {
 }
 
 createTables($pdo);
-?> 
+?>
