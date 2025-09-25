@@ -1,0 +1,35 @@
+services:
+  librarydb: 
+    build: 
+      context: ./DockerFiles/db
+    image: librarycontainers/librarydb
+    container_name: librarydb
+    ports:
+      - "3306:3306"
+    volumes:
+      - librarydbdata:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin12
+    
+  libraryapp: 
+    build: 
+      context: ./DockerFiles/app
+    image: librarycontainers/libraryapp
+    container_name: libraryapp
+    ports:
+      - "8080:8080"
+    volumes:
+      - libraryappdata:/var/www/html
+
+  libraryweb: 
+    build: 
+      context: ./DockerFiles/web
+    image: librarycontainers/libraryweb
+    container_name: libraryweb
+    ports:
+      - "80:80"
+
+volumes:
+  librarydbdata: {}
+  libraryappdata: {}
+

@@ -2,7 +2,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'library_db');
 define('DB_USER', 'library_user');
-define('DB_PASS', 'yourpassword');
+define('DB_PASS', 'admin12');
 
 if (session_status() == PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', 1);
