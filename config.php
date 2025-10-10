@@ -1,5 +1,5 @@
 <?php
-define('DB_HOST', 'localhost');
+define('DB_HOST', 'librarydb');
 define('DB_NAME', 'library_db');
 define('DB_USER', 'library_user');
 define('DB_PASS', 'admin12');
