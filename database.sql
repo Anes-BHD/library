@@ -1,6 +1,13 @@
+-- Create database first
 CREATE DATABASE IF NOT EXISTS library_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE library_db;
 
+-- Create user and grant privileges AFTER database exists
+CREATE USER IF NOT EXISTS 'library_user'@'%' IDENTIFIED BY 'admin12';
+GRANT ALL PRIVILEGES ON library_db.* TO 'library_user'@'%';
+FLUSH PRIVILEGES;
+
+-- Now create tables
 CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -60,6 +67,7 @@ CREATE TABLE IF NOT EXISTS borrowings (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Insert sample data
 INSERT INTO users (name, email, password, is_admin) VALUES 
 ('Admin', 'admin@epi.tn', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE);
 
@@ -73,4 +81,4 @@ INSERT INTO authors (name, biography) VALUES
 ('Victor Hugo', 'Écrivain français du XIXe siècle, auteur des Misérables'),
 ('J.K. Rowling', 'Auteure britannique de la série Harry Potter'),
 ('Agatha Christie', 'Auteure britannique de romans policiers'),
-('Jules Verne', 'Écrivain français, pionnier de la science-fiction'); 
+('Jules Verne', 'Écrivain français, pionnier de la science-fiction');
