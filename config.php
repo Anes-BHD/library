@@ -8,9 +8,9 @@ if (session_status() == PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', 1);
     ini_set('session.use_strict_mode', 1);
     ini_set('session.cookie_httponly', 1);
+    
+    session_start();
 }
-
-session_start();
 
 define('SITE_NAME', 'Bibliothèque EPI');
 define('UPLOAD_DIR', __DIR__ . '/uploads');
@@ -36,9 +36,10 @@ date_default_timezone_set('Africa/Tunis');
 mb_internal_encoding('UTF-8');
 
 try {
-    // Use TCP/IP connection instead of Unix socket
+    // Use TCP/IP connection for Docker networking
+    $dsn = "mysql:host=" . DB_HOST . ";port=3306;dbname=" . DB_NAME . ";charset=utf8mb4";
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";port=3306;dbname=" . DB_NAME . ";charset=utf8mb4",
+        $dsn,
         DB_USER,
         DB_PASS,
         [
@@ -50,4 +51,70 @@ try {
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
+
+function createTables($pdo) {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        phone VARCHAR(20),
+        is_admin BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS authors (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        birth_date DATE,
+        nationality VARCHAR(50),
+        biography TEXT,
+        photo VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS genres (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(50) NOT NULL UNIQUE,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS books (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        author_id INT,
+        genre_id INT,
+        isbn VARCHAR(20) UNIQUE,
+        description TEXT,
+        cover_image VARCHAR(255),
+        publication_date DATE,
+        total_copies INT DEFAULT 1,
+        available_copies INT DEFAULT 1,
+        is_featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE SET NULL,
+        FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE SET NULL
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS borrowings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        book_id INT NOT NULL,
+        borrow_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        due_date DATE NOT NULL,
+        return_date DATE NULL,
+        status ENUM('borrowed', 'returned', 'overdue') DEFAULT 'borrowed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+    )");
+}
+
+createTables($pdo);
 ?>
