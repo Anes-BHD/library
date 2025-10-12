@@ -68,15 +68,38 @@ function getUserById($id) {
  * Get all books from the database
  * @return array
  */
-function getAllBooks() {
+function getAllBooks($search = '', $author_id = '', $genre_id = '') {
     global $pdo;
-    $stmt = $pdo->query("
+    $query = "
         SELECT b.*, a.name as author_name, g.name as genre_name 
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.id
         LEFT JOIN genres g ON b.genre_id = g.id
-        ORDER BY b.title
-    ");
+        WHERE 1=1
+    ";
+    
+    $params = [];
+    
+    if (!empty($search)) {
+        $query .= " AND (b.title LIKE ? OR a.name LIKE ? OR g.name LIKE ?)";
+        $search_param = "%$search%";
+        $params = array_merge($params, [$search_param, $search_param, $search_param]);
+    }
+    
+    if (!empty($author_id)) {
+        $query .= " AND b.author_id = ?";
+        $params[] = $author_id;
+    }
+    
+    if (!empty($genre_id)) {
+        $query .= " AND b.genre_id = ?";
+        $params[] = $genre_id;
+    }
+    
+    $query .= " ORDER BY b.title";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -102,9 +125,31 @@ function getBookById($id) {
  * Get all authors from the database
  * @return array
  */
-function getAllAuthors() {
+function getAllAuthors($search = '', $nationality = '') {
     global $pdo;
-    $stmt = $pdo->query("SELECT a.*, COUNT(b.id) as total_books FROM authors a LEFT JOIN books b ON a.id = b.author_id GROUP BY a.id ORDER BY a.name");
+    $query = "
+        SELECT a.*, COUNT(b.id) as total_books 
+        FROM authors a 
+        LEFT JOIN books b ON a.id = b.author_id 
+        WHERE 1=1
+    ";
+    
+    $params = [];
+    
+    if (!empty($search)) {
+        $query .= " AND a.name LIKE ?";
+        $params[] = "%$search%";
+    }
+    
+    if (!empty($nationality)) {
+        $query .= " AND a.nationality = ?";
+        $params[] = $nationality;
+    }
+    
+    $query .= " GROUP BY a.id ORDER BY a.name";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     $authors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($authors as &$author) {
         if (!isset($author['total_books'])) $author['total_books'] = 0;
@@ -132,7 +177,6 @@ function getAllGenres() {
     global $pdo;
     $stmt = $pdo->query("SELECT g.*, COUNT(b.id) as book_count FROM genres g LEFT JOIN books b ON g.id = b.genre_id GROUP BY g.id ORDER BY g.name");
     $genres = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    // Ensure name/description are never null
     foreach ($genres as &$genre) {
         if ($genre['name'] === null) $genre['name'] = '';
         if ($genre['description'] === null) $genre['description'] = '';
@@ -227,28 +271,23 @@ function formatDate($date) {
  * @return string|null
  */
 function uploadBookCover($file) {
-    // Check if file was uploaded
     if (!isset($file['name']) || $file['error'] !== UPLOAD_ERR_OK) {
         return null;
     }
     
-    // Create uploads directory if it doesn't exist
-    $targetDir = "uploads/";
+    $targetDir = UPLOAD_DIR . "/books/";
     if (!file_exists($targetDir)) {
         mkdir($targetDir, 0777, true);
     }
     
-    // Generate unique filename
     $fileName = uniqid() . '_' . basename($file['name']);
     $targetFile = $targetDir . $fileName;
     
-    // Check file type
     $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
     if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
         return null;
     }
     
-    // Upload file
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
         return $targetFile;
     }
@@ -287,79 +326,78 @@ function isBookAvailable($bookId) {
     return $result && $result['available_copies'] > 0;
 }
 
-// Database connection
-function getDbConnection() {
-    try {
-        $socket = '/var/run/mysqld/mysqld.sock';
-        $pdo = new PDO(
-            "mysql:unix_socket=$socket;dbname=" . DB_NAME . ";charset=utf8mb4",
-            DB_USER,
-            DB_PASS,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false
-            ]
-        );
-        return $pdo;
-    } catch (PDOException $e) {
-        die("Database connection failed: " . $e->getMessage());
-    }
-}
-
-// Book functions
+/**
+ * Get featured books
+ * @param int $limit
+ * @return array
+ */
 function getFeaturedBooks($limit = 4) {
-    $pdo = getDbConnection();
-    $stmt = $pdo->query("
+    global $pdo;
+    $stmt = $pdo->prepare("
         SELECT b.*, a.name as author_name 
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.id
+        WHERE b.is_featured = 1
         ORDER BY b.created_at DESC
-        LIMIT $limit
+        LIMIT ?
     ");
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+/**
+ * Get recent books
+ * @param int $limit
+ * @return array
+ */
 function getRecentBooks($limit = 4) {
-    $pdo = getDbConnection();
-    $stmt = $pdo->query("
+    global $pdo;
+    $stmt = $pdo->prepare("
         SELECT b.*, a.name as author_name 
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.id
         ORDER BY b.created_at DESC
-        LIMIT $limit
+        LIMIT ?
     ");
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+/**
+ * Get popular authors
+ * @param int $limit
+ * @return array
+ */
 function getPopularAuthors($limit = 4) {
-    $pdo = getDbConnection();
-    $stmt = $pdo->query("
+    global $pdo;
+    $stmt = $pdo->prepare("
         SELECT a.*, COUNT(b.id) as book_count
         FROM authors a
         LEFT JOIN books b ON a.id = b.author_id
         GROUP BY a.id
         ORDER BY book_count DESC
-        LIMIT $limit
+        LIMIT ?
     ");
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Helper functions
+/**
+ * Helper functions
+ */
 function sanitizeInput($data) {
     return htmlspecialchars(strip_tags(trim($data)));
 }
 
 function generateSlug($text) {
-    // Convert to lowercase
     $text = strtolower($text);
-    // Replace non-alphanumeric characters with hyphens
     $text = preg_replace('/[^a-z0-9]+/', '-', $text);
-    // Remove leading/trailing hyphens
     return trim($text, '-');
 }
 
-// Error handling
 function setError($message) {
     $_SESSION['error'] = $message;
 }
