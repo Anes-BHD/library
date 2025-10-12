@@ -303,11 +303,11 @@ function uploadBookCover($file) {
 function getUserLoans($userId) {
     global $pdo;
     $stmt = $pdo->prepare("
-        SELECT b.*, bk.title as book_title
+        SELECT b.*, bk.title as book_title, bk.cover
         FROM borrowings b
         JOIN books bk ON b.book_id = bk.id
         WHERE b.user_id = ? AND b.status = 'borrowed'
-        ORDER BY b.borrow_date DESC
+        ORDER BY b.borrowed_at DESC
     ");
     $stmt->execute([$userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
