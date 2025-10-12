@@ -303,7 +303,7 @@ function uploadBookCover($file) {
 function getUserLoans($userId) {
     global $pdo;
     $stmt = $pdo->prepare("
-        SELECT b.*, bk.title as book_title, bk.cover_image
+        SELECT b.*, bk.title as book_title
         FROM borrowings b
         JOIN books bk ON b.book_id = bk.id
         WHERE b.user_id = ? AND b.status = 'borrowed'
