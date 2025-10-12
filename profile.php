@@ -21,7 +21,7 @@ if (isset($_GET['return_loan']) && isset($_GET['loan_id'])) {
     $loan = $stmt->fetch();
     
     if ($loan) {
-        $stmt = $pdo->prepare("UPDATE borrowings SET status = 'returned', return_date = NOW() WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE borrowings SET status = 'returned', returned_at = NOW() WHERE id = ?");
         $stmt->execute([$loanId]);
         
         $stmt = $pdo->prepare("UPDATE books SET available_copies = available_copies + 1 WHERE id = ?");
@@ -31,6 +31,7 @@ if (isset($_GET['return_loan']) && isset($_GET['loan_id'])) {
         exit;
     }
 }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $currentPassword = $_POST['current_password'] ?? '';
     $newPassword = $_POST['new_password'] ?? '';
@@ -214,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                     <div class="card loan-card h-100">
                                         <div class="row g-0">
                                             <div class="col-4">
-                                                <img src="<?php echo !empty($loan['cover_image']) ? htmlspecialchars($loan['cover_image']) : 'uploads/books/open-book.png'; ?>"
+                                                <img src="<?php echo !empty($loan['cover']) ? htmlspecialchars($loan['cover']) : 'uploads/books/open-book.png'; ?>"
                                                      class="img-fluid rounded-start h-100"
                                                      alt="<?php echo htmlspecialchars($loan['book_title']); ?>"
                                                      style="object-fit: cover;">
@@ -224,8 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                                     <h5 class="card-title"><?php echo htmlspecialchars($loan['book_title']); ?></h5>
                                                     <p class="card-text">
                                                         <small class="text-muted">
-                                                            Emprunté le: <?php echo formatDate($loan['borrow_date']); ?><br>
-                                                            À retourner le: <?php echo formatDate($loan['return_date']); ?>
+                                                            Emprunté le: <?php echo formatDate($loan['borrowed_at']); ?><br>
+                                                            À retourner le: <?php echo formatDate($loan['due_date']); ?>
                                                         </small>
                                                     </p>
                                                     <a href="profile.php?return_loan=1&loan_id=<?php echo $loan['id']; ?>" 
@@ -284,4 +285,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>
