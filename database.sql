@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS borrowings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     book_id INT NOT NULL,
     user_id INT NOT NULL,
+    status ENUM('borrowed', 'returned', 'overdue') DEFAULT 'borrowed',
     borrowed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     due_date TIMESTAMP NOT NULL,
     returned_at TIMESTAMP NULL,
