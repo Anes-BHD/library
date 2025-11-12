@@ -33,7 +33,12 @@ ini_set('display_errors', 1);
 
 date_default_timezone_set('Africa/Tunis');
 
-mb_internal_encoding('UTF-8');
+// Set internal encoding when mbstring is available; fall back to default_charset otherwise
+if (function_exists('mb_internal_encoding')) {
+    mb_internal_encoding('UTF-8');
+} else {
+    ini_set('default_charset', 'UTF-8');
+}
 
 try {
     // Use TCP/IP connection for Docker networking

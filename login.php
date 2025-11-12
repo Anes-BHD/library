@@ -46,13 +46,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.5rem;
         }
         .login-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/library-bg.jpg');
+            /* Replace background image with gradient + icon */
+            background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 100%);
             background-size: cover;
             background-position: center;
             min-height: calc(100vh - 56px);
             display: flex;
             align-items: center;
             padding: 2rem 0;
+        }
+        .login-hero-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.15);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:3rem;
+            margin:0 auto 1rem auto;
         }
         .login-card {
             background-color: rgba(255, 255, 255, 0.95);
@@ -105,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card login-card">
                         <div class="card-body p-5">
                             <h2 class="text-center mb-4">Connexion</h2>
+                            <div class="login-hero-icon"><i class="fas fa-book-open"></i></div>
                             
                             <?php if ($error): ?>
                             <div class="alert alert-danger" role="alert">
@@ -187,4 +201,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

@@ -26,6 +26,16 @@ $authors = getAllAuthors();
             object-fit: cover;
             border-radius: 50%;
         }
+        .author-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #fff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#6c757d;
+        }
         .table-actions {
             min-width: 120px;
         }
@@ -137,9 +147,7 @@ $authors = getAllAuthors();
                             <tr>
                                 <td><?php echo $author['id']; ?></td>
                                 <td>
-                                    <img src="<?php echo $author['photo'] ?? 'uploads/users/user.png'; ?>" 
-                                         alt="<?php echo htmlspecialchars($author['name']); ?>" 
-                                         class="author-img">
+                                    <div class="author-icon" aria-hidden="true"><i class="fas fa-user"></i></div>
                                 </td>
                                 <td><?php echo htmlspecialchars($author['name']); ?></td>
                                 <td><?php echo $author['birth_date'] ? date('d/m/Y', strtotime($author['birth_date'])) : '-'; ?></td>
@@ -247,7 +255,7 @@ $authors = getAllAuthors();
                             <label for="editAuthorPhoto" class="form-label">Photo</label>
                             <input type="file" class="form-control" id="editAuthorPhoto" name="photo" accept="image/*">
                             <div class="mt-2">
-                                <img id="currentAuthorPhoto" src="" alt="Photo actuelle" class="author-img">
+                                <div id="currentAuthorPhoto" class="author-icon" aria-hidden="true"></div>
                                 <small class="text-muted ms-2">Photo actuelle</small>
                             </div>
                         </div>
@@ -318,8 +326,13 @@ $authors = getAllAuthors();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <script>
+        function viewAuthor(id) {
+            $.get(`api/authors.php?id=${id}`, function(author) {
+                $('#currentAuthorPhoto').html('<i class="fas fa-user"></i>');
+                $('#editAuthorModal').modal('show');
+            });
+        }
         function editAuthor(id) {
             $.get(`api/authors.php?id=${id}`, function(author) {
                 $('#editAuthorId').val(author.id);
@@ -327,14 +340,12 @@ $authors = getAllAuthors();
                 $('#editAuthorBirthdate').val(author.birth_date);
                 $('#editAuthorNationality').val(author.nationality);
                 $('#editAuthorBiography').val(author.biography);
-                $('#currentAuthorPhoto').attr('src', author.photo || '/api/placeholder/60/60');
+                $('#currentAuthorPhoto').html('<i class="fas fa-user"></i>');
                 $('#editAuthorModal').modal('show');
             });
         }
-
         function deleteAuthor(id) {
-            $('#deleteAuthorModal').modal('show');
-            $('#confirmDelete').off('click').on('click', function() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet auteur ?')) {
                 $.ajax({
                     url: `api/authors.php?id=${id}`,
                     method: 'DELETE',
@@ -345,28 +356,8 @@ $authors = getAllAuthors();
                         alert('Erreur lors de la suppression: ' + xhr.responseJSON.error);
                     }
                 });
-            });
+            }
         }
-
-        $('#addAuthorForm, #editAuthorForm').on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const formData = new FormData(this);
-
-            $.ajax({
-                url: form.attr('action'),
-                method: form.attr('method'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function() {
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('Erreur: ' + xhr.responseJSON.error);
-                }
-            });
-        });
     </script>
 </body>
-</html> 
+</html>

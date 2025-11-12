@@ -88,7 +88,8 @@ switch ($method) {
             }
 
             // Handle cover image upload
-            $cover_image = 'uploads/books/open-book.png'; // Default image path
+            // No default image — use icons on frontend when cover is null
+            $cover_image = null;
             if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
                 $uploaded_image = uploadBookCover($_FILES['cover']);
                 if ($uploaded_image) {
@@ -97,10 +98,10 @@ switch ($method) {
             }
 
             // Insert book
-            $stmt = $pdo->prepare("
+            $stmt = $pdo->prepare("""
                 INSERT INTO books (title, author_id, genre_id, isbn, description, cover_image, publication_date, total_copies, available_copies)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
+            """);
             
             $stmt->execute([
                 $title,
@@ -184,4 +185,4 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
         break;
-} 
+}

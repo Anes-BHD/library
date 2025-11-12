@@ -58,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.5rem;
         }
         .register-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/library-bg.jpg');
+            /* Replace background image with gradient */
+            background: linear-gradient(135deg, #0069d9 0%, #8a2be2 100%);
             background-size: cover;
             background-position: center;
             min-height: calc(100vh - 56px);
@@ -70,6 +71,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .register-hero-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.15);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:3rem;
+            margin:0 auto 1rem auto;
         }
         .footer {
             background-color: #343a40;
@@ -126,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card register-card">
                         <div class="card-body p-5">
                             <h2 class="text-center mb-4">Inscription</h2>
+                            <div class="register-hero-icon"><i class="fas fa-book-open"></i></div>
                             
                             <?php if ($error): ?>
                             <div class="alert alert-danger" role="alert">

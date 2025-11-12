@@ -53,12 +53,32 @@ $books = getAllBooks($search, $author_id, $genre_id);
             border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .book-cover-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
         .book-cover-modal {
             max-width: 200px;
             height: 300px;
             object-fit: cover;
             border-radius: 4px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .book-cover-modal.book-cover-icon {
+            max-width: 200px;
+            height: 300px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#6c757d;
+            background:#fff;
         }
         .table th {
             background-color: #f8f9fa;
@@ -174,10 +194,8 @@ $books = getAllBooks($search, $author_id, $genre_id);
                                 <td><?php echo $book['id']; ?></td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $book['cover_image'] ?? 'uploads/books/open-book.png'; ?>" 
-                                             alt="Couverture de <?php echo htmlspecialchars($book['title']); ?>" 
-                                             class="book-cover me-3">
-                                        <div>
+                                        <div class="book-cover-icon me-3" aria-hidden="true"><i class="fas fa-book"></i></div>
+                                         <div>
                                             <strong><?php echo htmlspecialchars($book['title']); ?></strong>
                                             <?php if (!empty($book['description'])): ?>
                                             <p class="text-muted small mb-0"><?php echo substr(htmlspecialchars($book['description']), 0, 100) . '...'; ?></p>
@@ -285,7 +303,7 @@ $books = getAllBooks($search, $author_id, $genre_id);
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-4 text-center">
-                            <img id="bookCover" src="" alt="Couverture du livre" class="book-cover-modal mb-3">
+                            <div id="bookCover" class="book-cover-modal book-cover-icon mb-3" aria-hidden="true"><i class="fas fa-book fa-3x"></i></div>
                             <div class="d-grid gap-2">
                                 <button class="btn btn-success" type="button" id="borrowButton">Emprunter</button>
                             </div>
@@ -356,7 +374,8 @@ $books = getAllBooks($search, $author_id, $genre_id);
                 $('#bookIsbn').text(book.isbn);
                 $('#bookPublicationDate').text(new Date(book.publication_date).toLocaleDateString());
                 $('#bookDescription').text(book.description || 'Aucune description disponible');
-                $('#bookCover').attr('src', book.cover_image || 'uploads/books/open-book.png');
+                // render icon placeholder for book cover (no actual images)
+                $('#bookCover').html('<i class="fas fa-book fa-3x"></i>');
                 
                 const statusBadge = book.available_copies > 0 ? 
                     '<span class="badge bg-success">Disponible</span>' : 
@@ -432,7 +451,7 @@ $books = getAllBooks($search, $author_id, $genre_id);
                 $('#edit_description').val(book.description);
                 $('#edit_publication_date').val(book.publication_date);
                 $('#edit_quantity').val(book.total_copies);
-                $('#currentCover').attr('src', book.cover || '/api/placeholder/150/200');
+                $('#currentCover').html('<i class="fas fa-book fa-4x"></i>');
                 
                 $('#editBookModal').modal('show');
             });
@@ -486,4 +505,4 @@ $books = getAllBooks($search, $author_id, $genre_id);
         });
     </script>
 </body>
-</html> 
+</html>

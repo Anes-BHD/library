@@ -87,6 +87,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             border: 5px solid white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+        /* Icon-based avatar placeholder */
+        .profile-avatar-icon {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            background: linear-gradient(180deg,#fff,#f1f1f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            color: #6c757d;
+            font-size: 4rem;
+        }
+        /* Book cover icon placeholder for loan cards */
+        .book-cover-icon {
+            width: 100%;
+            height: 100%;
+            min-height: 120px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
         .loan-card {
             transition: transform 0.3s;
         }
@@ -161,12 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                 <div class="col-md-4 mb-4">
                     <div class="card profile-card">
                         <div class="profile-header text-center">
-                            <img src="<?php echo !empty($user['photo']) ? htmlspecialchars($user['photo']) : 'uploads/users/user.png'; ?>" alt="Photo de profil" class="profile-avatar mb-3">
-                            <h3><?php echo htmlspecialchars($user['name']); ?></h3>
-                            <p class="text-muted">
-                                <?php echo $user['is_admin'] ? 'Administrateur' : 'Utilisateur'; ?>
-                            </p>
-                        </div>
+                            <div class="profile-avatar-icon mb-3"><i class="fas fa-user-circle"></i></div>
+                             <h3><?php echo htmlspecialchars($user['name']); ?></h3>
+                             <p class="text-muted">
+                                 <?php echo $user['is_admin'] ? 'Administrateur' : 'Utilisateur'; ?>
+                             </p>
+                         </div>
                         <div class="card-body">
                             <h5 class="card-title mb-3">Informations personnelles</h5>
                             <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
@@ -215,10 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                     <div class="card loan-card h-100">
                                         <div class="row g-0">
                                             <div class="col-4">
-                                                <img src="<?php echo !empty($loan['cover']) ? htmlspecialchars($loan['cover']) : 'uploads/books/open-book.png'; ?>"
-                                                     class="img-fluid rounded-start h-100"
-                                                     alt="<?php echo htmlspecialchars($loan['book_title']); ?>"
-                                                     style="object-fit: cover;">
+                                                <div class="book-cover-icon rounded-start h-100" aria-hidden="true">
+                                                    <i class="fas fa-book fa-2x"></i>
+                                                </div>
                                             </div>
                                             <div class="col-8">
                                                 <div class="card-body">
