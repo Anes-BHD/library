@@ -1,6 +1,5 @@
 <?php
 require_once 'functions.php';
-
 requireLogin();
 
 $error = '';
@@ -63,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        body {
+            background-color: #f8f9fa;
+        }
         .navbar-brand {
             font-weight: bold;
             font-size: 1.5rem;
@@ -74,34 +76,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             border: none;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        .profile-header {
-            background-color: #f8f9fa;
-            padding: 2rem;
-            border-radius: 10px 10px 0 0;
-        }
-        .profile-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        /* Icon-based avatar placeholder */
+        /* Avatar icon styling */
         .profile-avatar-icon {
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            border: 5px solid white;
             background: linear-gradient(180deg,#fff,#f1f1f1);
+            border: 5px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            color: #6c757d;
+            color: #0d6efd;
             font-size: 4rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        /* Book cover icon placeholder for loan cards */
+        /* Book icon placeholder */
         .book-cover-icon {
             width: 100%;
             height: 100%;
@@ -110,7 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6c757d;
+            color: #0d6efd;
+            border-right: 1px solid #eee;
         }
         .loan-card {
             transition: transform 0.3s;
@@ -130,37 +120,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-book-open me-2"></i>Bibliothèque EPI</a>
+            <a class="navbar-brand" href="index.php">
+                <i class="fas fa-book-open me-2"></i>Bibliothèque EPI
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Accueil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="books.php">Livres</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="author_management.php">Auteurs</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="genre_management.php">Genres</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="index.php">Accueil</a></li>
+                    <li class="nav-item"><a class="nav-link" href="books.php">Livres</a></li>
+                    <li class="nav-item"><a class="nav-link" href="author_management.php">Auteurs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="genre_management.php">Genres</a></li>
                 </ul>
                 <div class="d-flex">
-                    <?php if (isLoggedIn()): ?>
-                        <a href="profile.php" class="btn btn-light me-2 active">
-                            <i class="fas fa-user me-1"></i>Mon Compte
-                        </a>
-                        <a href="logout.php" class="btn btn-outline-light">
-                            <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
-                        </a>
-                    <?php else: ?>
-                        <a href="login.php" class="btn btn-light me-2">Connexion</a>
-                        <a href="register.php" class="btn btn-outline-light">Inscription</a>
-                    <?php endif; ?>
+                    <a href="profile.php" class="btn btn-light me-2 active">
+                        <i class="fas fa-user me-1"></i>Mon Compte
+                    </a>
+                    <a href="logout.php" class="btn btn-outline-light">
+                        <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+                    </a>
                 </div>
             </div>
         </div>
@@ -170,37 +149,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <section class="profile-section">
         <div class="container">
             <?php if ($error): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo htmlspecialchars($error); ?>
-            </div>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
-            
             <?php if ($success): ?>
-            <div class="alert alert-success" role="alert">
-                <?php echo htmlspecialchars($success); ?>
-            </div>
+            <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
             <?php endif; ?>
 
             <div class="row">
-                <!-- User Information -->
+                <!-- User Info -->
                 <div class="col-md-4 mb-4">
                     <div class="card profile-card">
-                        <div class="profile-header text-center">
-                            <div class="profile-avatar-icon mb-3"><i class="fas fa-user-circle"></i></div>
-                             <h3><?php echo htmlspecialchars($user['name']); ?></h3>
-                             <p class="text-muted">
-                                 <?php echo $user['is_admin'] ? 'Administrateur' : 'Utilisateur'; ?>
-                             </p>
-                         </div>
+                        <div class="text-center p-4 bg-light rounded-top">
+                            <div class="profile-avatar-icon mb-3">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <h3><?php echo htmlspecialchars($user['name']); ?></h3>
+                            <p class="text-muted">
+                                <?php echo $user['is_admin'] ? 'Administrateur' : 'Utilisateur'; ?>
+                            </p>
+                        </div>
                         <div class="card-body">
                             <h5 class="card-title mb-3">Informations personnelles</h5>
                             <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
                             <p><strong>Membre depuis:</strong> <?php echo formatDate($user['created_at']); ?></p>
-                            
                             <hr>
-                            
                             <h5 class="card-title mb-3">Changer le mot de passe</h5>
-                            <form method="POST" action="">
+                            <form method="POST">
                                 <div class="mb-3">
                                     <label for="current_password" class="form-label">Mot de passe actuel</label>
                                     <input type="password" class="form-control" id="current_password" name="current_password" required>
@@ -221,18 +195,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                     </div>
                 </div>
 
-                <!-- Current Loans -->
+                <!-- Loans -->
                 <div class="col-md-8">
                     <div class="card profile-card">
                         <div class="card-body">
                             <h4 class="card-title mb-4">
                                 <i class="fas fa-book-reader me-2"></i>Mes emprunts en cours
                             </h4>
-                            
+
                             <?php if (empty($loans)): ?>
-                            <div class="alert alert-info">
-                                Vous n'avez aucun emprunt en cours.
-                            </div>
+                                <div class="alert alert-info">
+                                    Vous n'avez aucun emprunt en cours.
+                                </div>
                             <?php else: ?>
                             <div class="row row-cols-1 row-cols-md-2 g-4">
                                 <?php foreach ($loans as $loan): ?>
@@ -240,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                     <div class="card loan-card h-100">
                                         <div class="row g-0">
                                             <div class="col-4">
-                                                <div class="book-cover-icon rounded-start h-100" aria-hidden="true">
+                                                <div class="book-cover-icon rounded-start h-100">
                                                     <i class="fas fa-book fa-2x"></i>
                                                 </div>
                                             </div>
@@ -275,38 +249,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>Bibliothèque EPI</h5>
-                    <p>Votre source de connaissances et de divertissement à Sousse.</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Liens rapides</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white">Accueil</a></li>
-                        <li><a href="books.php" class="text-white">Livres</a></li>
-                        <li><a href="author_management.php" class="text-white">Auteurs</a></li>
-                        <li><a href="genre_management.php" class="text-white">Genres</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5>Contact</h5>
-                    <address>
-                        <p>École Polytechnique Internationale Sousse</p>
-                        <p>Email: bibliotheque@epi.tn</p>
-                        <p>Tél: +216 73 123 456</p>
-                    </address>
-                </div>
-            </div>
-            <hr class="bg-white">
-            <div class="text-center">
-                <p>&copy; 2024-2025 Bibliothèque EPI. Tous droits réservés.</p>
-            </div>
+        <div class="container text-center">
+            <p>&copy; 2024-2025 Bibliothèque EPI. Tous droits réservés.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
