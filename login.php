@@ -47,36 +47,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.5rem;
         }
         .login-section {
-            /* Replace background image with gradient + icon */
+            /* Reduced hero height and centered content */
             background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 100%);
             background-size: cover;
             background-position: center;
-            min-height: calc(100vh - 56px);
+            min-height: 48vh; /* smaller than full viewport */
             display: flex;
             align-items: center;
-            padding: 2rem 0;
+            justify-content: center;
+            padding: 40px 0;
         }
         .login-hero-icon {
-            width: 120px;
-            height: 120px;
+            width: 84px;
+            height: 84px;
             border-radius: 12px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.12);
             display:flex;
             align-items:center;
             justify-content:center;
             color:#fff;
-            font-size:3rem;
-            margin:0 auto 1rem auto;
+            font-size:1.8rem;
+            margin:0 auto 0.75rem auto;
         }
         .login-card {
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.98);
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            max-width: 420px;
+            margin: 0 auto;
         }
-        .footer {
-            background-color: #343a40;
-            color: white;
-            padding: 2rem 0;
+        /* smaller inputs on narrow screens */
+        @media (max-width:480px){
+            .login-hero-icon{width:64px;height:64px;font-size:1.4rem}
+            .login-card .card-body{padding:1.25rem}
         }
     </style>
 </head>
