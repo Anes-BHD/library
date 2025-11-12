@@ -1,0 +1,41 @@
+/* Centralized site styles to ensure consistent layout and icons display */
+:root{
+  --brand:#0d6efd;
+  --muted:#6c757d;
+  --bg:#f8f9fa;
+}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg);color:#222;margin:0}
+.navbar-brand{font-weight:700;font-size:1.25rem}
+.container{max-width:1100px;margin-left:auto;margin-right:auto}
+/* Hero */
+.hero-section{background:linear-gradient(135deg,var(--brand) 0%,#6f42c1 100%);color:#fff;padding:60px 20px;text-align:center}
+.hero-icon{width:110px;height:110px;margin:0 auto 18px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;border-radius:14px}
+.hero-section .lead{opacity:.95}
+/* Cards grid */
+.row.row-cols-1 .card{min-height:260px}
+.card{border-radius:10px}
+.card .card-img-top{border-top-left-radius:10px;border-top-right-radius:10px}
+/* placeholders */
+.book-cover-icon,.author-photo.icon,.author-icon,.profile-avatar-icon{background:#fff;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.book-cover-icon{height:220px}
+.author-photo.icon{height:180px}
+/* Table styling */
+.table{background:#fff}
+.table th{background:#f8f9fa}
+.table td{vertical-align:middle}
+.table-actions .btn{padding:.25rem .5rem}
+/* Profile */
+.profile-card{box-shadow:0 6px 18px rgba(0,0,0,0.06);border:none}
+.profile-avatar-icon{width:150px;height:150px;border-radius:50%;font-size:3rem}
+/* Placeholder for replaced broken images */
+.img-placeholder{background:#fff;display:flex;align-items:center;justify-content:center;color:var(--muted);min-height:120px;width:100%;border-radius:8px;border:1px solid rgba(0,0,0,0.04);}
+.img-placeholder i{font-size:1.8rem}
+/* Responsive tweaks */
+@media (max-width:768px){
+  .hero-section{padding:40px 10px}
+  .book-cover-icon{height:160px}
+}
+/* Footer */
+.footer{background:#343a40;color:#fff;padding:2rem 0;margin-top:3rem}
+.footer a{color:#fff}

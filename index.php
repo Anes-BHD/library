@@ -14,6 +14,7 @@ $popularAuthors = getPopularAuthors();
     <title>Bibliothèque EPI - Accueil</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/site.css">
     <style>
         .navbar-brand {
             font-weight: bold;
