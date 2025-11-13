@@ -10,18 +10,24 @@ if (!isLoggedIn()) {
     exit;
 }
 
+// Detect columns present in borrowings table
+$colsStmt = $pdo->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?");
+$colsStmt->execute([DB_NAME, 'borrowings']);
+$borrowCols = $colsStmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Determine a date column to use for ordering and inserts
+$dateCandidates = ['borrow_date', 'borrowed_at', 'loan_date', 'created_at'];
+$orderCol = null;
+foreach ($dateCandidates as $c) {
+    if (in_array($c, $borrowCols)) { $orderCol = $c; break; }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
         if (isset($_GET['id'])) {
-            $stmt = $pdo->prepare("
-                SELECT b.*, u.name as user_name, bk.title as book_title 
-                FROM borrowings b 
-                JOIN users u ON b.user_id = u.id 
-                JOIN books bk ON b.book_id = bk.id 
-                WHERE b.id = ?
-            ");
+            $stmt = $pdo->prepare("\n                SELECT b.*, u.name as user_name, bk.title as book_title \n                FROM borrowings b \n                JOIN users u ON b.user_id = u.id \n                JOIN books bk ON b.book_id = bk.id \n                WHERE b.id = ?\n            ");
             $stmt->execute([$_GET['id']]);
             $borrowing = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($borrowing) {
@@ -32,22 +38,17 @@ switch ($method) {
             }
         } else {
             if (isAdmin()) {
-                $stmt = $pdo->query("
-                    SELECT b.*, u.name as user_name, bk.title as book_title 
-                    FROM borrowings b 
-                    JOIN users u ON b.user_id = u.id 
-                    JOIN books bk ON b.book_id = bk.id 
-                    ORDER BY b.borrow_date DESC
-                ");
+                if ($orderCol) {
+                    $stmt = $pdo->query("\n                    SELECT b.*, u.name as user_name, bk.title as book_title \n                    FROM borrowings b \n                    JOIN users u ON b.user_id = u.id \n                    JOIN books bk ON b.book_id = bk.id \n                    ORDER BY b.$orderCol DESC\n                ");
+                } else {
+                    $stmt = $pdo->query("\n                    SELECT b.*, u.name as user_name, bk.title as book_title \n                    FROM borrowings b \n                    JOIN users u ON b.user_id = u.id \n                    JOIN books bk ON b.book_id = bk.id \n                    ORDER BY b.id DESC\n                ");
+                }
             } else {
-                $stmt = $pdo->prepare("
-                    SELECT b.*, u.name as user_name, bk.title as book_title 
-                    FROM borrowings b 
-                    JOIN users u ON b.user_id = u.id 
-                    JOIN books bk ON b.book_id = bk.id 
-                    WHERE b.user_id = ? 
-                    ORDER BY b.borrow_date DESC
-                ");
+                if ($orderCol) {
+                    $stmt = $pdo->prepare("\n                    SELECT b.*, u.name as user_name, bk.title as book_title \n                    FROM borrowings b \n                    JOIN users u ON b.user_id = u.id \n                    JOIN books bk ON b.book_id = bk.id \n                    WHERE b.user_id = ? \n                    ORDER BY b.$orderCol DESC\n                ");
+                } else {
+                    $stmt = $pdo->prepare("\n                    SELECT b.*, u.name as user_name, bk.title as book_title \n                    FROM borrowings b \n                    JOIN users u ON b.user_id = u.id \n                    JOIN books bk ON b.book_id = bk.id \n                    WHERE b.user_id = ? \n                    ORDER BY b.id DESC\n                ");
+                }
                 $stmt->execute([$_SESSION['user_id']]);
             }
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -58,7 +59,7 @@ switch ($method) {
         $user_id = $_POST['user_id'] ?? $_SESSION['user_id'] ?? null;
         $book_id = $_POST['book_id'] ?? null;
         $borrow_date = date('Y-m-d');
-        $due_date = date('Y-m-d', strtotime('+14 days')); // 2 weeks loan period
+        $due_date = date('Y-m-d', strtotime('+14 days'));
 
         if (!$user_id || !$book_id) {
             http_response_code(400);
@@ -73,10 +74,7 @@ switch ($method) {
                 exit;
             }
 
-            $stmt = $pdo->prepare("
-                SELECT id FROM borrowings 
-                WHERE user_id = ? AND book_id = ? AND status = 'borrowed'
-            ");
+            $stmt = $pdo->prepare("\n                SELECT id FROM borrowings \n                WHERE user_id = ? AND book_id = ? AND status = 'borrowed'\n            ");
             $stmt->execute([$user_id, $book_id]);
             if ($stmt->fetch()) {
                 http_response_code(400);
@@ -86,20 +84,40 @@ switch ($method) {
 
             $pdo->beginTransaction();
 
-            // Insert borrowing record
-            $stmt = $pdo->prepare("
-                INSERT INTO borrowings (user_id, book_id, borrow_date, due_date, status) 
-                VALUES (?, ?, ?, ?, 'borrowed')
-            ");
-            $stmt->execute([$user_id, $book_id, $borrow_date, $due_date]);
+            // Build INSERT dynamically based on available columns
+            $fields = ['user_id', 'book_id'];
+            $values = [$user_id, $book_id];
 
-            // Update book availability
-            $stmt = $pdo->prepare("
-                UPDATE books 
-                SET available_copies = available_copies - 1 
-                WHERE id = ?
-            ");
-            $stmt->execute([$book_id]);
+            // status column
+            if (in_array('status', $borrowCols)) {
+                $fields[] = 'status';
+                $values[] = 'borrowed';
+            }
+            // borrow date variations
+            foreach (['borrow_date','borrowed_at','loan_date'] as $dcol) {
+                if (in_array($dcol, $borrowCols)) {
+                    $fields[] = $dcol;
+                    $values[] = $borrow_date;
+                    break;
+                }
+            }
+            // due date
+            if (in_array('due_date', $borrowCols)) {
+                $fields[] = 'due_date';
+                $values[] = $due_date;
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($fields), '?'));
+            $fieldList = implode(', ', $fields);
+
+            $stmt = $pdo->prepare("INSERT INTO borrowings ($fieldList) VALUES ($placeholders)");
+            $stmt->execute($values);
+
+            // Update book availability if column exists
+            if (in_array('available_copies', (array)$pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DB_NAME."' AND TABLE_NAME = 'books'")->fetchAll(PDO::FETCH_COLUMN))) {
+                $stmt = $pdo->prepare("\n                UPDATE books \n                SET available_copies = available_copies - 1 \n                WHERE id = ?\n            ");
+                $stmt->execute([$book_id]);
+            }
 
             $pdo->commit();
             echo json_encode(['success' => true, 'message' => 'Book borrowed successfully']);
@@ -128,10 +146,8 @@ switch ($method) {
         }
 
         try {
-            // Start transaction
             $pdo->beginTransaction();
 
-            // Get the borrowing record
             $stmt = $pdo->prepare("SELECT book_id, status FROM borrowings WHERE id = ?");
             $stmt->execute([$id]);
             $borrowing = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -141,21 +157,21 @@ switch ($method) {
             }
 
             // Update borrowing record
-            $stmt = $pdo->prepare("
-                UPDATE borrowings 
-                SET status = ?, return_date = ? 
-                WHERE id = ?
-            ");
-            $stmt->execute([$status, $return_date, $id]);
+            // Include return_date column if exists, otherwise just update status
+            if (in_array('return_date', $borrowCols)) {
+                $stmt = $pdo->prepare("\n                UPDATE borrowings \n                SET status = ?, return_date = ? \n                WHERE id = ?\n            ");
+                $stmt->execute([$status, $return_date, $id]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE borrowings SET status = ? WHERE id = ?");
+                $stmt->execute([$status, $id]);
+            }
 
             // If returning the book, update book availability
             if ($status === 'returned' && $borrowing['status'] !== 'returned') {
-                $stmt = $pdo->prepare("
-                    UPDATE books 
-                    SET available_copies = available_copies + 1 
-                    WHERE id = ?
-                ");
-                $stmt->execute([$borrowing['book_id']]);
+                if (in_array('available_copies', (array)$pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DB_NAME."' AND TABLE_NAME = 'books'")->fetchAll(PDO::FETCH_COLUMN))) {
+                    $stmt = $pdo->prepare("\n                    UPDATE books \n                    SET available_copies = available_copies + 1 \n                    WHERE id = ?\n                ");
+                    $stmt->execute([$borrowing['book_id']]);
+                }
             }
 
             $pdo->commit();
@@ -180,10 +196,8 @@ switch ($method) {
             exit;
         }
         try {
-            // Start transaction
             $pdo->beginTransaction();
 
-            // Get the borrowing record
             $stmt = $pdo->prepare("SELECT book_id, status FROM borrowings WHERE id = ?");
             $stmt->execute([$id]);
             $borrowing = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -192,18 +206,14 @@ switch ($method) {
                 throw new Exception('Borrowing record not found');
             }
 
-            // Delete the borrowing record
             $stmt = $pdo->prepare("DELETE FROM borrowings WHERE id = ?");
             $stmt->execute([$id]);
 
-            // If the book was borrowed, update book availability
             if ($borrowing['status'] === 'borrowed') {
-                $stmt = $pdo->prepare("
-                    UPDATE books 
-                    SET available_copies = available_copies + 1 
-                    WHERE id = ?
-                ");
-                $stmt->execute([$borrowing['book_id']]);
+                if (in_array('available_copies', (array)$pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".DB_NAME."' AND TABLE_NAME = 'books'")->fetchAll(PDO::FETCH_COLUMN))) {
+                    $stmt = $pdo->prepare("\n                    UPDATE books \n                    SET available_copies = available_copies + 1 \n                    WHERE id = ?\n                ");
+                    $stmt->execute([$borrowing['book_id']]);
+                }
             }
 
             $pdo->commit();
@@ -219,4 +229,4 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
         break;
-} 
+}
