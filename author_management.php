@@ -139,7 +139,7 @@ $authors = getAllAuthors();
                                 <?php endif; ?>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="authorsTableBody">
                             <?php if (empty($authors)): ?>
                             <tr>
                                 <td colspan="<?php echo isAdmin() ? '7' : '6'; ?>" class="text-center">Aucun auteur trouvé</td>
@@ -329,37 +329,120 @@ $authors = getAllAuthors();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        function viewAuthor(id) {
-            $.get(`api/authors.php?id=${id}`, function(author) {
-                $('#currentAuthorPhoto').html('<i class="fas fa-user"></i>');
-                $('#editAuthorModal').modal('show');
+        const isAdmin = <?php echo json_encode(isAdmin()); ?>;
+
+        // Utility to escape HTML in JS when inserting into DOM
+        function escapeHtml(unsafe) {
+            return String(unsafe || '').replace(/[&<>"'`=\/]/g, function (s) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                    '`': '&#96;',
+                    '=': '&#61;',
+                    '/': '&#47;'
+                })[s];
             });
         }
-        function editAuthor(id) {
-            $.get(`api/authors.php?id=${id}`, function(author) {
-                $('#editAuthorId').val(author.id);
-                $('#editAuthorName').val(author.name);
-                $('#editAuthorBirthdate').val(author.birth_date);
-                $('#editAuthorNationality').val(author.nationality);
-                $('#editAuthorBiography').val(author.biography);
-                $('#currentAuthorPhoto').html('<i class="fas fa-user"></i>');
-                $('#editAuthorModal').modal('show');
-            });
-        }
-        function deleteAuthor(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cet auteur ?')) {
-                $.ajax({
-                    url: `api/authors.php?id=${id}`,
-                    method: 'DELETE',
-                    success: function() {
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert('Erreur lors de la suppression: ' + xhr.responseJSON.error);
+
+        // Refresh authors table by fetching from API and rebuilding tbody
+        function refreshAuthors() {
+            $.get('api/authors.php', function(data) {
+                const tbody = $('#authorsTableBody');
+                tbody.empty();
+                if (!data || data.length === 0) {
+                    const colspan = isAdmin ? 7 : 6;
+                    tbody.append(`<tr><td colspan="${colspan}" class="text-center">Aucun auteur trouvé</td></tr>`);
+                    return;
+                }
+                data.forEach(function(author) {
+                    const id = author.id || '';
+                    const name = escapeHtml(author.name || '');
+                    const birth = author.birth_date ? new Date(author.birth_date).toLocaleDateString() : '-';
+                    const bio = escapeHtml((author.biography || '').substring(0, 100)) + '...';
+                    const books = author.total_books || 0;
+                    const photoHtml = `<div class="author-icon" aria-hidden="true"><i class="fas fa-user"></i></div>`;
+                    let actions = '';
+                    if (isAdmin) {
+                        actions = `
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewAuthor(${id})"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editAuthor(${id})"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAuthor(${id})"><i class="fas fa-trash"></i></button>
+                            </td>`;
                     }
+                    const row = `
+                        <tr>
+                            <td>${id}</td>
+                            <td>${photoHtml}</td>
+                            <td>${name}</td>
+                            <td>${birth}</td>
+                            <td>${bio}</td>
+                            <td>${books}</td>
+                            ${actions}
+                        </tr>`;
+                    tbody.append(row);
                 });
-            }
+            }).fail(function() {
+                console.error('Failed to reload authors');
+            });
         }
+
+        // AJAX submit for addAuthorForm
+        $('#addAuthorForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const fd = new FormData(form);
+            $.ajax({
+                url: 'api/authors.php',
+                method: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    $('#addAuthorModal').modal('hide');
+                    // reset form
+                    form.reset();
+                    refreshAuthors();
+                },
+                error: function(xhr) {
+                    alert('Erreur lors de l\'enregistrement: ' + (xhr.responseJSON?.error || 'Une erreur est survenue'));
+                }
+            });
+        });
+
+        // AJAX submit for editAuthorForm
+        $('#editAuthorForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const fd = new FormData(form);
+            $.ajax({
+                url: 'api/authors.php',
+                method: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                success: function(resp) {
+                    $('#editAuthorModal').modal('hide');
+                    refreshAuthors();
+                },
+                error: function(xhr) {
+                    alert('Erreur lors de la mise à jour: ' + (xhr.responseJSON?.error || 'Une erreur est survenue'));
+                }
+            });
+        });
+
+        // Ensure actions still work after refresh
+        window.viewAuthor = viewAuthor;
+        window.editAuthor = editAuthor;
+        window.deleteAuthor = deleteAuthor;
+
+        // Initial load
+        $(document).ready(function() {
+            refreshAuthors();
+        });
     </script>
 </body>
 </html>

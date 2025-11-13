@@ -2,11 +2,19 @@
 require_once '../config.php';
 require_once '../functions.php';
 
-header('Content-Type: application/json');
+// Detect AJAX requests
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+if ($isAjax) {
+    header('Content-Type: application/json');
+}
 
 if (!isLoggedIn()) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    if ($isAjax) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Unauthorized']);
+    } else {
+        header('Location: ../login.php');
+    }
     exit;
 }
 
@@ -18,21 +26,29 @@ switch ($method) {
         if (isset($_GET['id'])) {
             $author = getAuthorById($_GET['id']);
             if ($author) {
-                echo json_encode($author);
+                if ($isAjax) echo json_encode($author);
             } else {
-                http_response_code(404);
-                echo json_encode(['error' => 'Author not found']);
+                if ($isAjax) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Author not found']);
+                } else {
+                    header('Location: ../author_management.php');
+                }
             }
         } else {
             $authors = getAllAuthors();
-            echo json_encode($authors);
+            if ($isAjax) echo json_encode($authors);
         }
         break;
 
     case 'POST':
         if (!isAdmin()) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden - Admin access required']);
+            if ($isAjax) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Forbidden - Admin access required']);
+            } else {
+                header('Location: ../author_management.php');
+            }
             exit;
         }
         $id = $_POST['id'] ?? null;
@@ -45,8 +61,12 @@ switch ($method) {
             $photo = uploadBookCover($_FILES['photo']);
         }
         if (empty($name)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Name is required']);
+            if ($isAjax) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Name is required']);
+            } else {
+                header('Location: ../author_management.php');
+            }
             exit;
         }
         try {
@@ -56,50 +76,83 @@ switch ($method) {
                 $stmt->execute([$id]);
                 $existing = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$existing) {
-                    http_response_code(404);
-                    echo json_encode(['error' => 'Author not found']);
+                    if ($isAjax) {
+                        http_response_code(404);
+                        echo json_encode(['error' => 'Author not found']);
+                    } else {
+                        header('Location: ../author_management.php');
+                    }
                     exit;
                 }
                 if (!$photo) $photo = $existing['photo'];
                 $stmt = $pdo->prepare("UPDATE authors SET name=?, birth_date=?, nationality=?, biography=?, photo=? WHERE id=?");
                 $stmt->execute([$name, $birth_date, $nationality, $biography, $photo, $id]);
-                echo json_encode(['success' => true, 'message' => 'Author updated']);
+                if ($isAjax) {
+                    echo json_encode(['success' => true, 'message' => 'Author updated']);
+                } else {
+                    header('Location: ../author_management.php');
+                }
             } else {
                 // Add author
                 $stmt = $pdo->prepare("INSERT INTO authors (name, birth_date, nationality, biography, photo) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$name, $birth_date, $nationality, $biography, $photo]);
-                echo json_encode(['success' => true, 'message' => 'Author added']);
+                if ($isAjax) {
+                    echo json_encode(['success' => true, 'message' => 'Author added']);
+                } else {
+                    // After successful form submit, redirect back to authors management page
+                    header('Location: ../author_management.php');
+                }
             }
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Failed to save author: ' . $e->getMessage()]);
+            if ($isAjax) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to save author: ' . $e->getMessage()]);
+            } else {
+                header('Location: ../author_management.php');
+            }
         }
         break;
 
     case 'DELETE':
         if (!isAdmin()) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden - Admin access required']);
+            if ($isAjax) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Forbidden - Admin access required']);
+            } else {
+                header('Location: ../author_management.php');
+            }
             exit;
         }
         $id = $_GET['id'] ?? null;
         if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Author ID is required']);
+            if ($isAjax) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Author ID is required']);
+            } else {
+                header('Location: ../author_management.php');
+            }
             exit;
         }
         try {
             $stmt = $pdo->prepare("DELETE FROM authors WHERE id = ?");
             $stmt->execute([$id]);
-            echo json_encode(['success' => true, 'message' => 'Author deleted']);
+            if ($isAjax) echo json_encode(['success' => true, 'message' => 'Author deleted']);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete author: ' . $e->getMessage()]);
+            if ($isAjax) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to delete author: ' . $e->getMessage()]);
+            } else {
+                header('Location: ../author_management.php');
+            }
         }
         break;
 
     default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
+        if ($isAjax) {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        } else {
+            header('Location: ../author_management.php');
+        }
         break;
-} 
+}
