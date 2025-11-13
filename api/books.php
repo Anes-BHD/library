@@ -98,25 +98,47 @@ switch ($method) {
             }
 
             // Insert book
-            // Some databases use 'cover' column name; use 'cover' for compatibility
-            $stmt = $pdo->prepare("INSERT INTO books (title, author_id, genre_id, isbn, description, cover, publication_date, total_copies, available_copies) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
-            $stmt->execute([
-                $title,
-                $author_id,
-                $genre_id,
-                $isbn,
-                $description,
-                $cover_image,
-                $publication_date,
-                $quantity,
-                $quantity
-            ]);
+            // Build INSERT dynamically based on columns that exist in the database
+            $colsStmt = $pdo->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?");
+            $colsStmt->execute([DB_NAME, 'books']);
+            $columns = $colsStmt->fetchAll(PDO::FETCH_COLUMN);
 
-            $book_id = $pdo->lastInsertId();
+            $fields = ['title','author_id','genre_id','isbn','description'];
+            $values = [$title, $author_id, $genre_id, $isbn, $description];
 
-            // Commit transaction
-            $pdo->commit();
+            // cover column may be named 'cover' or 'cover_image'
+            if (in_array('cover', $columns)) {
+                $fields[] = 'cover';
+                $values[] = $cover_image;
+            } elseif (in_array('cover_image', $columns)) {
+                $fields[] = 'cover_image';
+                $values[] = $cover_image;
+            }
+
+            if (in_array('publication_date', $columns)) {
+                $fields[] = 'publication_date';
+                $values[] = $publication_date;
+            }
+
+            if (in_array('total_copies', $columns)) {
+                $fields[] = 'total_copies';
+                $values[] = $quantity;
+            }
+            if (in_array('available_copies', $columns)) {
+                $fields[] = 'available_copies';
+                $values[] = $quantity;
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($fields), '?'));
+            $fieldList = implode(', ', $fields);
+
+            $stmt = $pdo->prepare("INSERT INTO books ($fieldList) VALUES ($placeholders)");
+            $stmt->execute($values);
+             
+             $book_id = $pdo->lastInsertId();
+
+             // Commit transaction
+             $pdo->commit();
 
             // Return success response
             echo json_encode([
