@@ -98,7 +98,8 @@ switch ($method) {
             }
 
             // Insert book
-            $stmt = $pdo->prepare("INSERT INTO books (title, author_id, genre_id, isbn, description, cover_image, publication_date, total_copies, available_copies) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // Some databases use 'cover' column name; use 'cover' for compatibility
+            $stmt = $pdo->prepare("INSERT INTO books (title, author_id, genre_id, isbn, description, cover, publication_date, total_copies, available_copies) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $stmt->execute([
                 $title,
