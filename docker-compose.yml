@@ -1,8 +1,9 @@
+version: "3.8"
+
 services:
   librarydb: 
-    build: 
-      context: ./DockerFiles/db
-    image: librarycontainers/librarydb
+    build: ./DockerFiles/db
+    image: anesbhd/librarydb
     container_name: librarydb
     ports:
       - "3306:3306"
@@ -10,26 +11,31 @@ services:
       - librarydbdata:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=admin12
-    
+    networks:
+      - app-network
+
   libraryapp: 
-    build: 
+    build:
       context: ./DockerFiles/app
-    image: librarycontainers/libraryapp
+    image: anesbhd/libraryapp
     container_name: libraryapp
-    ports:
-      - "8080:8080"
-    volumes:
-      - libraryappdata:/var/www/html
+    networks:
+      - app-network
 
   libraryweb: 
-    build: 
-      context: ./DockerFiles/web
-    image: librarycontainers/libraryweb
+    build: ./DockerFiles/web
+    image: anesbhd/libraryweb
     container_name: libraryweb
     ports:
       - "80:80"
+    depends_on:
+      - libraryapp
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  librarydbdata: {}
-  libraryappdata: {}
-
+  librarydbdata:

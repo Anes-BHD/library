@@ -1,4 +1,10 @@
-FROM nginx
+FROM nginx:alpine
 
-RUN rm -rf /etc/nginx/sites-available/default
-COPY default /etc/nginx/sites-available/default
+# Remove default config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom config
+COPY library.conf /etc/nginx/conf.d/app.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
