@@ -1,5 +1,8 @@
 FROM nginx:alpine
 
+# Install optional tools (nginx already installed)
+RUN apk update && apk add --no-cache bash
+
 # Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
 
