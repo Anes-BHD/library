@@ -34,7 +34,7 @@ RUN sed -i 's|^listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.
 RUN mkdir -p /var/log/php && touch /var/log/php/php-fpm.log && chmod 777 /var/log/php/php-fpm.log
 
 # Clone your repo (using BuildKit SSH mount)
-RUN --mount=type=ssh git clone git@github.com:Anes-BHD/library.git /tmp/library
+RUN  git clone https://github.com/Anes-BHD/library.git /tmp/library
 
 # Copy files to web root
 RUN mkdir -p /var/www/html \
