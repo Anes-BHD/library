@@ -15,8 +15,6 @@ RUN apt-get update && apt-get install -y \
         && docker-php-ext-install pdo pdo_mysql mysqli gd zip \
         && rm -rf /var/lib/apt/lists/*
 
-# Configure SSH for GitHub (for private repo clone)
-RUN mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Configure PHP-FPM to listen on TCP 9000
 RUN sed -i 's|^listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.conf \
